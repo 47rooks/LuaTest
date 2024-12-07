@@ -108,7 +108,7 @@
 	<haxedef name="NAPE_RELEASE_BUILD" unless="debug" />
 
 	<!-- Enable for macro debugging -->
-	<!-- <haxeflag name="-D dump=pretty" /> -->
+	<haxeflag name="-D dump=pretty" />
 	<!-- _________________________________ Custom _______________________________ -->
 
 	<!--Place

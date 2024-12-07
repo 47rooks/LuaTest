@@ -1,54 +1,51 @@
 package;
 
+import ScriptableState.LuaStateRef;
+// import ScriptableState.LuaStateRef; // FIXME looks like this is defined in the wrong place
 import cpp.RawPointer;
 import flixel.FlxSprite;
-// import hxlua.Lua;
-// import hxlua.LuaL;
-// import hxlua.Types.Lua_State;
-// import hxlua.Types;
 import hxluajit.Lua;
 import hxluajit.LuaL;
-import hxluajit.Types.Lua_State;
 import hxluajit.Types;
 
+@:autoBuild(Macros.registerLuaCallbacks())
 class ScriptableSprite extends FlxSprite
 {
 	static var callbacks:Map<String, (Float) -> Void> = new Map<String, (Float) -> Void>();
 
 	var _Lname:String;
+	var _assetsDir:String;
+	var _L:LuaStateRef;
 
-	public function new(Lname:String, x:Float = 0.0, y:Float = 0.0)
+	public function new(L:LuaStateRef, Lname:String, assetsDir:String, x:Float = 0.0, y:Float = 0.0)
 	{
 		super(x, y);
+		_L = L;
 		_Lname = Lname;
+		_assetsDir = assetsDir;
 		callbacks.set(_Lname + '_setX', setX);
 	}
 
-	public function initToLua(L:cpp.RawPointer<Lua_State>):Void
-	{
-		// Push key sprite fields as a Lua table
-		Lua.createtable(L, 0, 4);
-
-		// push name
-		Lua.pushstring(L, 'Lname');
-		Lua.pushstring(L, _Lname + '_setX');
-		Lua.settable(L, -3);
-
-		// push x
-		Lua.pushstring(L, 'x');
-		Lua.pushnumber(L, x);
-		Lua.settable(L, -3);
-
-		// push y
-		Lua.pushstring(L, 'y');
-		Lua.pushnumber(L, y);
-		Lua.settable(L, -3);
-
-		Lua.setglobal(L, _Lname);
-
-		/* register our function */
-		Lua.register(L, _Lname + "_setX", cpp.Function.fromStaticFunction(f));
-	}
+	// public function initToLua(L:cpp.RawPointer<Lua_State>):Void
+	// {
+	// 	// Push key sprite fields as a Lua table
+	// 	Lua.createtable(L, 0, 4);
+	// 	// push name
+	// 	Lua.pushstring(L, 'Lname');
+	// 	Lua.pushstring(L, _Lname + '_setX');
+	// 	Lua.settable(L, -3);
+	// 	// push x
+	// 	Lua.pushstring(L, 'x');
+	// 	Lua.pushnumber(L, x);
+	// 	Lua.settable(L, -3);
+	// 	// push y
+	// 	Lua.pushstring(L, 'y');
+	// 	Lua.pushnumber(L, y);
+	// 	Lua.settable(L, -3);
+	// 	Lua.setglobal(L, _Lname);
+	// 	/* register our function */
+	// 	Lua.register(L, _Lname + "_setX", cpp.Function.fromStaticFunction(f));
+	// }
 
 	public function updateToLua(L:cpp.RawPointer<Lua_State>):Void
 	{

@@ -4,7 +4,7 @@ import ScriptableState.LuaStateRef;
 import ScriptableState.StdVector;
 import cpp.Function;
 import flixel.FlxG;
-import flixel.FlxState;
+import flixel.FlxSprite;
 import flixel.input.FlxInput.FlxInputState;
 import flixel.math.FlxPoint;
 import flixel.text.FlxText;
@@ -12,7 +12,7 @@ import flixel.util.FlxColor;
 import hxluajit.Lua;
 import hxluajit.LuaL;
 import hxluajit.Types.LuaL_Reg;
-import openfl.Lib;
+import hxluajit.Types.Lua_State;
 import openfl.utils.Assets;
 
 class PongState extends ScriptableState
@@ -20,7 +20,7 @@ class PongState extends ScriptableState
 	var _ball:ScriptableSprite;
 	var _leftPaddle:ScriptableSprite;
 	var _rightPaddle:ScriptableSprite;
-	var _net:ScriptableSprite;
+	var _net:FlxSprite;
 	var _leftScore:FlxText;
 	var _rightScore:FlxText;
 
@@ -41,20 +41,20 @@ class PongState extends ScriptableState
 		super.create();
 
 		// Create the ball and paddles
-		_ball = new ScriptableSprite('ball');
+		_ball = new Ball(_L, 'ball', _assetsDir);
 		_ball.makeGraphic(10, 10, FlxColor.RED);
 		_ball.screenCenter();
 		_ball.elasticity = 1.0;
 
-		_leftPaddle = new ScriptableSprite('leftPaddle', LEFT_X, FlxG.height / 2.0 - 20);
+		_leftPaddle = new Paddle(_L, 'leftPaddle', _assetsDir, LEFT_X, FlxG.height / 2.0 - 20);
 		_leftPaddle.makeGraphic(10, 40, FlxColor.WHITE);
 		_leftPaddle.immovable = true;
 
-		_rightPaddle = new ScriptableSprite('rightPaddle', RIGHT_X, FlxG.height / 2.0 - 20);
+		_rightPaddle = new Paddle(_L, 'rightPaddle', _assetsDir, RIGHT_X, FlxG.height / 2.0 - 20);
 		_rightPaddle.makeGraphic(10, 40, FlxColor.WHITE);
 		_rightPaddle.immovable = true;
 
-		_net = new ScriptableSprite('net');
+		_net = new FlxSprite();
 		_net.loadGraphic('assets/images/PongNet.png');
 		_net.screenCenter();
 		_net.y = 0;
@@ -76,15 +76,12 @@ class PongState extends ScriptableState
 
 		// Push all required initial state to Lua
 		_initLua();
-		_leftPaddle.initToLua(_L);
-		_rightPaddle.initToLua(_L);
-		_ball.initToLua(_L);
 	}
 
 	function _initLua():Void
 	{
 		// Load library script
-		var s = Assets.getText('${_assetsDir}/scripts/lib.lua');
+		var s = Assets.getText('${_assetsDir}/scripts/PongState.lua');
 		LuaL.dostring(_L, s);
 
 		// Register callbacks
@@ -123,7 +120,7 @@ class PongState extends ScriptableState
 	}
 
 	@:luaCallback()
-	public static function leftPaddleMove(L:LuaStateRef):Int
+	public static function leftPaddleMove(L:cpp.RawPointer<Lua_State>):Int
 	{
 		var s = cast(FlxG.state, PongState);
 		final n:Int = Lua.gettop(L);
@@ -151,7 +148,7 @@ class PongState extends ScriptableState
 	}
 
 	@:luaCallback()
-	public static function rightPaddleMove(L:LuaStateRef):Int
+	public static function rightPaddleMove(L:cpp.RawPointer<Lua_State>):Int
 	{
 		var s = cast(FlxG.state, PongState);
 		final n:Int = Lua.gettop(L);
@@ -179,7 +176,7 @@ class PongState extends ScriptableState
 	}
 
 	@:luaCallback()
-	public static function serve(L:LuaStateRef):Int
+	public static function serve(L:cpp.RawPointer<Lua_State>):Int
 	{
 		var s = cast(FlxG.state, PongState);
 		final n:Int = Lua.gettop(L);

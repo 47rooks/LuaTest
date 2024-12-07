@@ -1,5 +1,6 @@
 package;
 
+import cpp.Pointer;
 import cpp.RawPointer;
 import cpp.Reference;
 import flixel.FlxG;
@@ -9,7 +10,52 @@ import hxluajit.LuaL;
 import hxluajit.Types.Lua_State;
 import openfl.Lib;
 
-typedef LuaStateRef = cpp.RawPointer<Lua_State>;
+abstract LuaStateRef(cpp.Pointer<Lua_State>)
+{
+	inline function new(p:Pointer<Lua_State>)
+	{
+		this = p;
+	}
+
+	@:from
+	static public function fromPointer(p:cpp.Pointer<Lua_State>)
+	{
+		return new LuaStateRef(p);
+	}
+
+	@:to
+	public function toPointer():cpp.Pointer<Lua_State>
+	{
+		return this;
+	}
+
+	@:from
+	static public function fromRawPointer(p:cpp.RawPointer<Lua_State>)
+	{
+		return new LuaStateRef(Pointer.fromRaw(p));
+	}
+
+	@:to
+	public function toRawPointer():cpp.RawPointer<Lua_State>
+	{
+		return this.raw;
+	}
+}
+
+// abstract LuaFnCbk((L:LuaStateRef) -> Int)
+// {
+// 	inline function new(f:(L:LuaStateRef) -> Int)
+// 	{
+// 		this = f;
+// 	}
+// 	@:to
+// 	public function toLuaRefCbk():(L:cpp.RawPointer<Lua_State>) -> Int {
+// 		var f:(L:cpp.RawPointer<Lua_State>) -> Int = function {
+// 			this.
+// 		}
+// 		return
+// 	}
+// }
 
 @:autoBuild(Macros.registerLuaCallbacks())
 abstract class ScriptableState extends FlxState
