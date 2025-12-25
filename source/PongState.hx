@@ -1,24 +1,26 @@
 package;
 
-import ScriptableState.LuaStateRef;
-import ScriptableState.StdVector;
-import cpp.Function;
+import Lua.LuaStatus;
+import Lua.LuaType;
+import Lua.State;
+import LuaCode.CompileOptions;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.input.FlxInput.FlxInputState;
 import flixel.math.FlxPoint;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import hxluajit.Lua;
-import hxluajit.LuaL;
-import hxluajit.Types.LuaL_Reg;
-import hxluajit.Types.Lua_State;
 import openfl.utils.Assets;
+import scriptable.ScriptableSprite;
+import scriptable.ScriptableState;
 
+// @:autoBuild(Macros.registerLuaCallbacks())
 class PongState extends ScriptableState
 {
+	@:luaField
 	var _ball:ScriptableSprite;
+	@:luaField
 	var _leftPaddle:ScriptableSprite;
+	@:luaField
 	var _rightPaddle:ScriptableSprite;
 	var _net:FlxSprite;
 	var _leftScore:FlxText;
@@ -31,26 +33,27 @@ class PongState extends ScriptableState
 	var _leftPoints = 0;
 	var _rightPoints = 0;
 
-	public function new(assetsDir:String)
+	public function new(assetsDir:String, parent:String, name:String)
 	{
-		super(assetsDir);
+		super(assetsDir, parent, name);
 	}
 
 	override public function create()
 	{
 		super.create();
+		_syncedFields.concat(['_ball', '_leftPaddle', '_rightPaddle']);
 
 		// Create the ball and paddles
-		_ball = new Ball(_L, 'ball', _assetsDir);
+		_ball = new Ball(_L, _assetsDir, _dottedName, "ball");
 		_ball.makeGraphic(10, 10, FlxColor.RED);
 		_ball.screenCenter();
 		_ball.elasticity = 1.0;
 
-		_leftPaddle = new Paddle(_L, 'leftPaddle', _assetsDir, LEFT_X, FlxG.height / 2.0 - 20);
+		_leftPaddle = new Paddle(_L, _assetsDir, _dottedName, "leftPaddle", LEFT_X, FlxG.height / 2.0 - 20);
 		_leftPaddle.makeGraphic(10, 40, FlxColor.WHITE);
 		_leftPaddle.immovable = true;
 
-		_rightPaddle = new Paddle(_L, 'rightPaddle', _assetsDir, RIGHT_X, FlxG.height / 2.0 - 20);
+		_rightPaddle = new Paddle(_L, _assetsDir, _dottedName, "rightPaddle", RIGHT_X, FlxG.height / 2.0 - 20);
 		_rightPaddle.makeGraphic(10, 40, FlxColor.WHITE);
 		_rightPaddle.immovable = true;
 
@@ -82,47 +85,34 @@ class PongState extends ScriptableState
 	{
 		// Load library script
 		var s = Assets.getText('${_assetsDir}/scripts/PongState.lua');
-		LuaL.dostring(_L, s);
+		trace('Lua script is:\n${s}');
+		// LuaL.dostring(_L, s);
+		// Cannot pass null so use an empty struct.
+		// Cannot instantiate {} directly as call site, so use a local variable.
+		var options:CompileOptions = {};
 
+		var byteCode = LuaCode.compile(s, s.length, options);
+		trace('bytecode length: ${byteCode.size}');
+		var r = Lua.load(_L, "code", byteCode, 0);
+		if (r != LuaStatus.OK)
+		{
+			trace('Error loading chunk: ${Lua.tostring(_L, -1)}');
+			Lua.pop(_L, 1); // remove error message
+			Sys.exit(1);
+		}
+		Lua.call(_L, 0, 1); // call the loaded chunk
 		// Register callbacks
-		registerFunctions();
-
-		// Push global state values
-		var globals = ['width' => FlxG.width, 'height' => FlxG.height];
-		setFlxG(globals);
+		createType(_L);
 	}
 
-	override function postLuaReload()
-	{
-		_initLua();
-	}
+	// override function postLuaReload()
+	// {
+	// 	_initLua();
+	// }
 
 	@:luaCallback()
-	public static function keyPressed(L:LuaStateRef):Int
+	public function leftPaddleMove(L:State):Int
 	{
-		{
-			final n:Int = Lua.gettop(L);
-
-			/* loop through each argument */
-			var key:String = '';
-
-			key = Lua.tostring(L, 1);
-
-			Lua.pop(L, n); /* clear the stack */
-
-			if (FlxG.keys.checkStatus(FlxKey.fromString(key), FlxInputState.PRESSED))
-			{
-				return 1;
-			}
-
-			return 0;
-		}
-	}
-
-	@:luaCallback()
-	public static function leftPaddleMove(L:cpp.RawPointer<Lua_State>):Int
-	{
-		var s = cast(FlxG.state, PongState);
 		final n:Int = Lua.gettop(L);
 		if (n != 2)
 		{
@@ -132,15 +122,17 @@ class PongState extends ScriptableState
 
 		var x = Lua.tonumber(L, 1);
 		var y = Lua.tonumber(L, 2);
-		s._leftPaddle.x += x;
-		s._leftPaddle.y += y;
-		if (s._leftPaddle.y < 0)
+
+		_leftPaddle.x += x;
+		_leftPaddle.y += y;
+
+		if (_leftPaddle.y < 0)
 		{
-			s._leftPaddle.y = 0;
+			_leftPaddle.y = 0;
 		}
-		if (s._leftPaddle.y > FlxG.height - s._leftPaddle.height)
+		if (_leftPaddle.y > FlxG.height - _leftPaddle.height)
 		{
-			s._leftPaddle.y = FlxG.height - s._leftPaddle.height;
+			_leftPaddle.y = FlxG.height - _leftPaddle.height;
 		}
 		Lua.pop(L, n); /* clear the stack */
 
@@ -148,9 +140,9 @@ class PongState extends ScriptableState
 	}
 
 	@:luaCallback()
-	public static function rightPaddleMove(L:cpp.RawPointer<Lua_State>):Int
+	public function rightPaddleMove(L:State):Int
 	{
-		var s = cast(FlxG.state, PongState);
+		trace('rightpaddle called');
 		final n:Int = Lua.gettop(L);
 		if (n != 2)
 		{
@@ -160,15 +152,15 @@ class PongState extends ScriptableState
 
 		var x = Lua.tonumber(L, 1);
 		var y = Lua.tonumber(L, 2);
-		s._rightPaddle.x += x;
-		s._rightPaddle.y += y;
-		if (s._rightPaddle.y < 0)
+		_rightPaddle.x += x;
+		_rightPaddle.y += y;
+		if (_rightPaddle.y < 0)
 		{
-			s._rightPaddle.y = 0;
+			_rightPaddle.y = 0;
 		}
-		if (s._rightPaddle.y > FlxG.height - s._rightPaddle.height)
+		if (_rightPaddle.y > FlxG.height - _rightPaddle.height)
 		{
-			s._rightPaddle.y = FlxG.height - s._rightPaddle.height;
+			_rightPaddle.y = FlxG.height - _rightPaddle.height;
 		}
 		Lua.pop(L, n); /* clear the stack */
 
@@ -176,9 +168,8 @@ class PongState extends ScriptableState
 	}
 
 	@:luaCallback()
-	public static function serve(L:cpp.RawPointer<Lua_State>):Int
+	public function serve(L:State):Int
 	{
-		var s = cast(FlxG.state, PongState);
 		final n:Int = Lua.gettop(L);
 		if (n != 4)
 		{
@@ -193,9 +184,9 @@ class PongState extends ScriptableState
 		var speed = Lua.tonumber(L, 3);
 		var degrees = Lua.tonumber(L, 4);
 
-		s._ball.x = x;
-		s._ball.y = y;
-		s._ball.velocity.setPolarDegrees(speed, degrees);
+		_ball.x = x;
+		_ball.y = y;
+		_ball.velocity.setPolarDegrees(speed, degrees);
 
 		Lua.pop(L, n); /* clear the stack */
 
@@ -224,9 +215,16 @@ class PongState extends ScriptableState
 		_rightPaddle.updateToLua(_L);
 		_ball.updateToLua(_L);
 
-		Lua.getglobal(_L, 'update');
-		Lua.pushnumber(_L, elapsed);
+		var rv = Lua.getglobal(_L, 'update');
+		if (rv != LuaType.FUNCTION)
+		{
+			Sys.println('Lua update function not found. rv=${rv}');
+			Lua.pop(_L, 1);
+			return;
+		}
 
+		// Push elapsed time to Lua
+		Lua.pushnumber(_L, elapsed);
 		var e = Lua.pcall(_L, 1, 0, 0);
 		if (e > 0)
 		{

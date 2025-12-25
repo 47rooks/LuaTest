@@ -1,18 +1,16 @@
 package;
 
-import ScriptableState.LuaStateRef;
-import ScriptableState.StdVector;
-import hxluajit.Lua;
-import hxluajit.LuaL;
-import hxluajit.Types.LuaL_Reg;
-import hxluajit.Types.Lua_State;
-import openfl.utils.Assets;
+import Lua.State;
+// import openfl.utils.Assets;
+import scriptable.ScriptableSprite;
 
 class Ball extends ScriptableSprite
 {
-	public function new(L:LuaStateRef, name:String, assetsDir:String, x:Float = 0.0, y:Float = 0.0)
+	final SCRIPT_NAME = "ball.lua";
+
+	public function new(L:State, assetsDir:String, parent:String, name:String, x:Float = 0.0, y:Float = 0.0)
 	{
-		super(L, name, assetsDir, x, y);
+		super(L, assetsDir, parent, name, SCRIPT_NAME, x, y);
 
 		_initLua();
 	}
@@ -24,6 +22,6 @@ class Ball extends ScriptableSprite
 		// LuaL.dostring(_L, s);
 
 		// Register callbacks
-		registerFunctions();
+		createType(_L);
 	}
 }

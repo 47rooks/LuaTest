@@ -41,8 +41,7 @@
 	<!-- _______________________________ Libraries ______________________________ -->
 
 	<haxelib name="flixel" />
-	<!-- <haxelib name="hxlua" /> -->
-	<haxelib name="hxluajit" />
+	<haxelib name="hxluau" />
 
 	<!--In
 	case you want to use the addons package-->

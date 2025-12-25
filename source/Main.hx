@@ -1,7 +1,6 @@
 package;
 
-import flixel.FlxGame;
-import lime.utils.Assets;
+import Game;
 import openfl.display.Sprite;
 
 class Main extends Sprite
@@ -9,6 +8,8 @@ class Main extends Sprite
 	public function new()
 	{
 		super();
-		addChild(new FlxGame(0, 0, PongState.new.bind('assets'), true));
+		// FIXME this name value looks like a problem here. I was expecting
+		//       it should be a field name from the parent object
+		addChild(new Game(0, 0, PongState.new.bind('assets', "game", "PongState"), 60, 60, false, false));
 	}
 }
