@@ -1,4 +1,3 @@
-
 local ScriptableSprite = {}
 ScriptableSprite.__index = ScriptableSprite
 
@@ -19,8 +18,7 @@ function ScriptableSprite.new(): ScriptableSprite
     return setmetatable(self, ScriptableSprite)
 end
 
-function ScriptableSprite.init(self, sprite, x, y)
-  self.sprite = sprite
+function ScriptableSprite.init(self, x, y)
   self.x = x or 0
   self.y = y or 0
 end
@@ -36,3 +34,5 @@ end
 function ScriptableSprite.syncFromHaxe()
   -- Override in subclass
 end
+
+return ScriptableSprite

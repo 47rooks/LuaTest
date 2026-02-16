@@ -7,9 +7,13 @@ import LuaCode.CompileOptions;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxPoint;
+import flixel.system.debug.completion.CompletionListEntry;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
+import openfl.display.NativeWindow;
 import openfl.utils.Assets;
+import scriptable.LuaVM;
+import scriptable.ScriptableGame;
 import scriptable.ScriptableSprite;
 import scriptable.ScriptableState;
 
@@ -81,29 +85,7 @@ class PongState extends ScriptableState
 		_initLua();
 	}
 
-	function _initLua():Void
-	{
-		// Load library script
-		var s = Assets.getText('${_assetsDir}/scripts/PongState.lua');
-		trace('Lua script is:\n${s}');
-		// LuaL.dostring(_L, s);
-		// Cannot pass null so use an empty struct.
-		// Cannot instantiate {} directly as call site, so use a local variable.
-		var options:CompileOptions = {};
-
-		var byteCode = LuaCode.compile(s, s.length, options);
-		trace('bytecode length: ${byteCode.size}');
-		var r = Lua.load(_L, "code", byteCode, 0);
-		if (r != LuaStatus.OK)
-		{
-			trace('Error loading chunk: ${Lua.tostring(_L, -1)}');
-			Lua.pop(_L, 1); // remove error message
-			Sys.exit(1);
-		}
-		Lua.call(_L, 0, 1); // call the loaded chunk
-		// Register callbacks
-		createType(_L);
-	}
+	function _initLua() {}
 
 	// override function postLuaReload()
 	// {
@@ -113,6 +95,7 @@ class PongState extends ScriptableState
 	@:luaCallback()
 	public function leftPaddleMove(L:State):Int
 	{
+		trace('leftpaddle called');
 		final n:Int = Lua.gettop(L);
 		if (n != 2)
 		{
@@ -170,6 +153,7 @@ class PongState extends ScriptableState
 	@:luaCallback()
 	public function serve(L:State):Int
 	{
+		trace('serve called');
 		final n:Int = Lua.gettop(L);
 		if (n != 4)
 		{
@@ -211,27 +195,12 @@ class PongState extends ScriptableState
 		FlxG.collide(_ball, _leftPaddle);
 		FlxG.collide(_ball, _rightPaddle);
 
-		_leftPaddle.updateToLua(_L);
-		_rightPaddle.updateToLua(_L);
-		_ball.updateToLua(_L);
-
-		var rv = Lua.getglobal(_L, 'update');
-		if (rv != LuaType.FUNCTION)
-		{
-			Sys.println('Lua update function not found. rv=${rv}');
-			Lua.pop(_L, 1);
-			return;
-		}
-
-		// Push elapsed time to Lua
-		Lua.pushnumber(_L, elapsed);
-		var e = Lua.pcall(_L, 1, 0, 0);
-		if (e > 0)
-		{
-			Sys.println('Lua call (update) failed: ${Lua.tostring(_L, -1)}');
-			Lua.pop(_L, 1);
-		}
-
+		// @formatter:off
+		ScriptableGame.luaVM.callLuau("game.state.update", [
+			{"type": "luaGetField", "value": _dottedName},
+			{"type": "number", "value": elapsed}
+		]);
+		// @formatter:on
 		if (_ball.y < 0)
 		{
 			_ball.velocity.bounce(FlxPoint.get(0, 1));
@@ -257,5 +226,21 @@ class PongState extends ScriptableState
 			_leftScore.textField.sharpness = 400;
 			resetForNewServe();
 		}
+		if (FlxG.keys.justReleased.N)
+		{
+			ScriptableGame.luaVM.dump("game");
+		}
+	}
+
+	public override function updateToLua(L:State):Void
+	{
+		// Find the table in Lua state and update its field values
+		ScriptableGame.luaVM.getDottedName(L, _dottedName);
+
+		_ball.updateToLua(L);
+		_leftPaddle.updateToLua(L);
+		_rightPaddle.updateToLua(L);
+
+		Lua.pop(L, 1); // pop parent table
 	}
 }

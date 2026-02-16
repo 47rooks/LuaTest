@@ -6,7 +6,7 @@ import scriptable.ScriptableGame;
 class Game extends ScriptableGame
 {
 	final ASSETS_DIR = 'assets';
-	final LUA_SCRIPT = 'game.lua';
+	final LUA_SCRIPT = 'bootstrap.luau';
 
 	public function new(width:Int, height:Int, ?initialState:InitialState, updateFramerate:Int = 60, drawFramerate = 60, skipSplash:Bool = false,
 			startFullscreen = false)

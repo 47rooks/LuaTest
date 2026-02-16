@@ -10,6 +10,6 @@ class Main extends Sprite
 		super();
 		// FIXME this name value looks like a problem here. I was expecting
 		//       it should be a field name from the parent object
-		addChild(new Game(0, 0, PongState.new.bind('assets', "game", "PongState"), 60, 60, false, false));
+		addChild(new Game(0, 0, PongState.new.bind('assets', "game", "state"), 60, 60, false, false));
 	}
 }

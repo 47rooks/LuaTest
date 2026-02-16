@@ -17,3 +17,5 @@ function ScriptableG.new(): ScriptableG
 
     return setmetatable(self, ScriptableG)
 end
+
+return ScriptableG

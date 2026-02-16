@@ -43,6 +43,9 @@
 	<haxelib name="flixel" />
 	<haxelib name="hxluau" />
 
+	<!-- <haxeflag name="-D" value="HXLUAU_DEBUG" /> -->
+	<!-- <haxeflag name="-D" value="HXCPP_VERBOSE" /> -->
+
 	<!--In
 	case you want to use the addons package-->
 	<!--<haxelib

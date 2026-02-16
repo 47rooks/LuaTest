@@ -1,3 +1,4 @@
+local g = require("../scripts/g")
 local ScriptableGame = {}
 ScriptableGame.__index = ScriptableGame
 
@@ -15,3 +16,5 @@ function ScriptableGame.new(name): ScriptableGame
 
     return setmetatable(self, ScriptableGame)
 end
+
+return ScriptableGame

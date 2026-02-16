@@ -3,7 +3,7 @@ package scriptable;
 import Lua.State;
 import flixel.FlxSprite;
 
-@:autoBuild(scriptable.Macros.createType())
+@:autoBuild(scriptable.Macros.createLuaHelperFns())
 class ScriptableSprite extends FlxSprite implements IScriptable
 {
 	var _Lname:String;
@@ -22,8 +22,6 @@ class ScriptableSprite extends FlxSprite implements IScriptable
 		_dottedName = '${parent}.${name}';
 		_parent = parent;
 		_scriptName = scriptName;
-
-		initLua(L, parent, name);
 	}
 
 	public function setX(x:Float):Void
@@ -63,6 +61,7 @@ class ScriptableSprite extends FlxSprite implements IScriptable
 
 	public function initLua(L:State, parent:String, name:String)
 	{
+		trace('ScriptableSprite initLua, parent=${parent}, name=${name}');
 		ScriptableGame.luaVM.getDottedName(ScriptableGame.luaVM.L, _parent);
 
 		// Push this table
@@ -99,13 +98,33 @@ class ScriptableSprite extends FlxSprite implements IScriptable
 		Lua.pop(L, 1); // pop parent table
 	}
 
-	public function updateFromLua(L:State) {}
+	public function updateFromLua(L:State)
+	{
+		// Find the table in Lua state and update its field values
+		ScriptableGame.luaVM.getDottedName(L, _dottedName);
+
+		// Push the latest values
+		// FIXME these need to come from the subclass via macro meta
+		var values = ['x' => x, 'y' => y];
+		Lua.getfield(L, -1, 'x');
+		x = Lua.tonumber(L, -1);
+		Lua.pop(L, 1); // pop x value
+		Lua.getfield(L, -1, 'y');
+		y = Lua.tonumber(L, -1);
+		Lua.pop(L, 1); // pop y value
+
+		Lua.pop(L, 1); // pop parent table
+	}
 
 	public function destroyLua() {}
 
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
-		updateToLua(_L);
+		// updateToLua(_L);
+		if (!(this is Ball))
+			updateFromLua(_L);
 	}
+
+	function createLuaInstance(L:State):Void {}
 }

@@ -17,11 +17,7 @@ class Paddle extends ScriptableSprite
 
 	function _initLua():Void
 	{
-		// Load library script
-		// var s = Assets.getText('${_assetsDir}/scripts/Paddle.lua');
-		// LuaL.dostring(_L, s); // FIXME this is going to be done twice - how do we make it idempotent or check and not do it if it's been done.
-
 		// Register callbacks
-		createType(_L);
+		createLuaInstance(_L);
 	}
 }

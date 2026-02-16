@@ -22,6 +22,6 @@ class Ball extends ScriptableSprite
 		// LuaL.dostring(_L, s);
 
 		// Register callbacks
-		createType(_L);
+		createLuaInstance(_L);
 	}
 }

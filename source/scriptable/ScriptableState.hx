@@ -1,13 +1,14 @@
 package scriptable;
 
 import Lua.LuaStatus;
+import Lua.LuaType;
 import Lua.State;
 import LuaCode.CompileOptions;
 import flixel.FlxG;
 import flixel.FlxState;
 import scriptable.ScriptableGame;
 
-@:autoBuild(scriptable.Macros.createType())
+@:autoBuild(scriptable.Macros.createLuaHelperFns())
 abstract class ScriptableState extends FlxState implements IScriptable
 {
 	var _assetsDir:String;
@@ -30,7 +31,7 @@ abstract class ScriptableState extends FlxState implements IScriptable
 		_dottedName = '${parent}.${name}';
 
 		initLuaState(); // FIXME is this even a good idea - better to refer to the VM directly ?
-		initLua(_L, parent, name);
+		FlxG.signals.postStateSwitch.add(() -> initLua(_L, parent, name));
 	}
 
 	/**
@@ -53,34 +54,15 @@ abstract class ScriptableState extends FlxState implements IScriptable
 	 * Subclasses will implement this indirectly via macros and metadata
 	 * to control what member fields are replicated to Lua.
 	 */
-	abstract function createType(L:State):Void;
+	abstract function setHaxeFunctions(L:State, dottedName:String):Void;
+
+	abstract function updateLuaFields(L:State, dottedName:String):Void;
 
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
 
-		updateToLua(_L);
-
-		if (FlxG.keys.justReleased.G)
-		{
-			// Dump values from Lua
-			// Lua.dostring(_L, _debugScript);
-
-			// Cannot pass null so use an empty struct.
-			// Cannot instantiate {} directly as call site, so use a local variable.
-			var options:CompileOptions = {};
-
-			var byteCode = LuaCode.compile(_debugScript, _debugScript.length, options);
-			trace('bytecode length: ${byteCode.size}');
-			var r = Lua.load(_L, "code", byteCode, 0);
-			if (r != LuaStatus.OK)
-			{
-				trace('Error loading chunk: ${Lua.tostring(_L, -1)}');
-				Lua.pop(_L, 1); // remove error message
-				Sys.exit(1);
-			}
-			Lua.call(_L, 0, 1); // call the loaded chunk
-		}
+		// updateToLua(_L);
 
 		// Check for hot-reload of scripts
 		// if (FlxG.keys.justReleased.R && FlxG.keys.pressed.SHIFT && FlxG.keys.pressed.CONTROL)
@@ -93,20 +75,42 @@ abstract class ScriptableState extends FlxState implements IScriptable
 
 	public function initLua(L:State, parent:String, name:String)
 	{
-		ScriptableGame.luaVM.getDottedName(ScriptableGame.luaVM.L, _parent);
+		// @formatter:off
+		ScriptableGame.luaVM.callLuau("game.utils.newPongState", [
+			{"type": "string", "value": "PongState"},
+			{"type": "number", "value": 0}
+		]);
+		// @formatter:on
+		// ScriptableGame.luaVM.getDottedName(ScriptableGame.luaVM.L, _dottedName);
 
-		// Push this table
-		Lua.pushstring(L, name);
-		Lua.newtable(L);
+		setHaxeFunctions(L, "game.state");
 
-		// // Put the table fields here
+		// Put the table fields here
 		updateFlxGValues(L);
-		// registerFunctions(L); // FIXME this needs to be an abstract method
-		//       in this class and macro gen in subs.
 
-		Lua.settable(L, -3);
+		ScriptableGame.luaVM.dump('game');
 
-		Lua.pop(L, 1); // pop parent table
+		// Now add the paddles and ball
+		// @formatter:off
+		ScriptableGame.luaVM.callLuau("game.utils.newPaddle", [
+			{"type": "string", "value": "leftPaddle"},
+			{"type": "number", "value": 0}
+		]);
+
+		ScriptableGame.luaVM.callLuau("game.utils.newPaddle", [
+				{"type": "string", "value": "rightPaddle"},
+				{"type": "number", "value": 0}
+		]);
+
+		ScriptableGame.luaVM.callLuau("game.utils.newBall", [
+			{"type": "string", "value": "ball"},
+			{"type": "number", "value": 0}
+		]);
+		// @formatter:on
+		trace('Dumping Lua state after creating paddles and ball:');
+		ScriptableGame.luaVM.dump('game');
+
+		updateToLua(_L);
 	}
 
 	/**

@@ -7,7 +7,7 @@ import flixel.input.FlxInput.FlxInputState;
 import flixel.input.keyboard.FlxKey;
 import haxe.ValueException;
 
-@:autoBuild(scriptable.Macros.createType())
+@:autoBuild(scriptable.Macros.createLuaHelperFns())
 abstract class ScriptableG implements IScriptable
 {
 	public function new() {}
@@ -73,16 +73,7 @@ class FlxG extends ScriptableG
 			throw new ValueException("parent may not be null");
 		}
 
-		Lua.getglobal(L, "game");
-		Lua.pushstring(L, name);
-		Lua.newtable(L);
-		// Put the table fields here
-		updateFlxGValues(L);
-		createType(L);
-		trace('dotted name=${_dottedName}');
-		Lua.settable(L, -3);
-
-		Lua.pop(L, 1); // pop parent table
+		setHaxeFunctions(L, _dottedName);
 	}
 
 	public function updateToLua(L:State):Void

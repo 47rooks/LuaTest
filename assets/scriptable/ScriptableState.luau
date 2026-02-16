@@ -1,7 +1,7 @@
 local ScriptableState = {}
 ScriptableState.__index = ScriptableState
 
-type ScriptableStateData = {
+export type ScriptableStateData = {
     name: string,
     replicatedInHaxe: boolean,
     script: string
@@ -34,3 +34,5 @@ end
 function ScriptableState.syncFromHaxe()
   -- Override in subclass
 end
+
+return ScriptableState
