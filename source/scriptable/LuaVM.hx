@@ -1,5 +1,6 @@
 package scriptable;
 
+import Lua.LuaDefines;
 import Lua.LuaStatus;
 import Lua.LuaType;
 import Lua.State;
@@ -50,10 +51,12 @@ class LuaVM
 		dumpStack();
 		Lualib.openlibs(L);
 		dumpStack();
+		#if GAME_DEBUG
 		// Note debug library occupies stack slot 1 and so the top of stack
 		// is never 0 after this is loaded.
-		// FIXME is a debug flag control needed ? YES!!!!
 		Lualib.opendebug(L);
+		trace('Finished loading Lua libraries, gettop=${Lua.gettop(L)}');
+		#end
 	}
 
 	public function loadScript(script:String):Void
@@ -73,11 +76,12 @@ class LuaVM
 		// Get debug.traceback function
 		// If debug is not loaded, and it shouldn't be in production,
 		// this debug function will not run.
-		Lua.getglobal(L, "debug");
-		if (Lua.istable(L, -1) != 1)
+		var t = Lua.getglobal(L, "debug");
+		if (t != LuaType.TABLE)
 		{
 			trace('debug is not a table');
-			Lua.pop(L, 1);
+			// return with original error message still on stack
+			Lua.pop(L, 1); // remove the getglobal error value
 			return 1;
 		}
 
@@ -85,7 +89,7 @@ class LuaVM
 		if (Lua.isfunction(L, -1) != 1)
 		{
 			trace('debug.traceback is not a function');
-			Lua.pop(L, 2);
+			Lua.pop(L, 2); // remove the getfield error value and debug table
 			return 1;
 		}
 
@@ -96,7 +100,6 @@ class LuaVM
 
 		msg = Lua.tostring(L, -1);
 		trace('post-errhandler message=${msg}');
-		// var traceback = Lua.debugtrace(L);
 
 		return 1; // number of return values
 	}
@@ -176,7 +179,9 @@ class LuaVM
 			// FIXME - raise exception or just exit ?
 		}
 		Lua.pop(L, 1); // pop errorhandler
-		// trace('Finished calling Lua function: ${functionName}, gettop=${Lua.gettop(L)}');
+		#if GAME_DEBUG
+		trace('Finished calling Lua function: ${functionName}, gettop=${Lua.gettop(L)}');
+		#end
 	}
 
 	public function shutdown():Void

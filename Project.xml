@@ -46,6 +46,13 @@
 	<!-- <haxeflag name="-D" value="HXLUAU_DEBUG" /> -->
 	<!-- <haxeflag name="-D" value="HXCPP_VERBOSE" /> -->
 
+	<!-- 
+	Add game layer debug information. Ultimately there may be a 
+	GameBase layer and a game layer, possibly with different debug
+	flags.
+	-->
+	<!-- <haxeflag name="-D" value="GAME_DEBUG" /> -->
+
 	<!--In
 	case you want to use the addons package-->
 	<!--<haxelib
