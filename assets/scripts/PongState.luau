@@ -1,7 +1,5 @@
 local ScriptableSprite = require("../scriptable/ScriptableSprite")
 local ScriptableState = require("../scriptable/ScriptableState")
-local G = require("./g")
-local game = require("./game")
 
 local PongState = {}
 PongState.__index = PongState
