@@ -1,28 +1,10 @@
 --!strict
-local PongState = require("../scripts/PongState")
-local ScriptableSprite = require("../scriptable/ScriptableSprite")
-
 local Utils = {}
 
-function Utils.newPongState(name)
-    game.state = PongState.new(name)
-end
-
-function Utils.newPaddle(name)
-    game.state[name] = ScriptableSprite.new()
-    game.state[name]:init(100, 100)
-end
-
-function Utils.newBall(name)
-    game.state[name] = ScriptableSprite.new()
-    game.state[name]:init(100, 100)
-end
-
 local visited = {}
+function Utils.dumpTable(key: string, indent: number)
 
-function Utils.dumpTable(key, indent)
-
-    local function _dumpTable(t, indent: number)
+    local function _dumpTable(t: { [string]: any }, indent: number)
         if (visited[t]) then
             -- cycle detected, return to avoid infinite recursion
             print(string.rep(" ", indent + 2) .. "SELF-REFERENCE (cycle detected)")

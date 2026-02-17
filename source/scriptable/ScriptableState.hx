@@ -76,7 +76,7 @@ abstract class ScriptableState extends FlxState implements IScriptable
 	public function initLua(L:State, parent:String, name:String)
 	{
 		// @formatter:off
-		ScriptableGame.luaVM.callLuau("game.utils.newPongState", [
+		ScriptableGame.luaVM.callLuau("game.newPongState", [
 			{"type": "string", "value": "PongState"},
 			{"type": "number", "value": 0}
 		]);
@@ -92,17 +92,17 @@ abstract class ScriptableState extends FlxState implements IScriptable
 
 		// Now add the paddles and ball
 		// @formatter:off
-		ScriptableGame.luaVM.callLuau("game.utils.newPaddle", [
+		ScriptableGame.luaVM.callLuau("game.newPaddle", [
 			{"type": "string", "value": "leftPaddle"},
 			{"type": "number", "value": 0}
 		]);
 
-		ScriptableGame.luaVM.callLuau("game.utils.newPaddle", [
+		ScriptableGame.luaVM.callLuau("game.newPaddle", [
 				{"type": "string", "value": "rightPaddle"},
 				{"type": "number", "value": 0}
 		]);
 
-		ScriptableGame.luaVM.callLuau("game.utils.newBall", [
+		ScriptableGame.luaVM.callLuau("game.newBall", [
 			{"type": "string", "value": "ball"},
 			{"type": "number", "value": 0}
 		]);
